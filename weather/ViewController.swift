@@ -142,8 +142,8 @@ class ForecastTableViewCell: UITableViewCell {
         }
     }
     
-    func setData(data: ForecastData, timestamp: Int) {
-        self.dateLabel.text = self.date(timestamp: timestamp)
+    func setData(data: ForecastData, timezone: Int) {
+        self.dateLabel.text = self.date(data: data, timezone: timezone)
         self.descriptionLabel.text = data.weather[0].description
         self.weatherImageView.kf.setImage(with: URL(string: String(format: NetworkConstants.Url.icon, data.weather[0].icon))!, placeholder: UIImage())
         self.maxDegreeLabel.text = String(format: Contents.maxDegree, data.temp.maxDegree())
@@ -152,10 +152,11 @@ class ForecastTableViewCell: UITableViewCell {
     
     
 
-    func date(timestamp: Int) -> String {
-        let calendar = Calendar.current
+    func date(data: ForecastData, timezone: Int) -> String {
+        var calendar = Calendar.current
+        calendar.timeZone = TimeZone(secondsFromGMT: timezone)!
         
-        let date = Date(timeIntervalSince1970: TimeInterval(timestamp))
+        let date = Date(timeIntervalSince1970: TimeInterval(data.dt + timezone))
         
         guard !calendar.isDateInToday(date) else {
             return Contents.today
@@ -238,8 +239,6 @@ class ViewController: UIViewController {
                         self.activityIndicator.stopAnimating()
                     }
                     
-                    
-
                     if $1 != nil {
                         self.lock.unlock()
                     }
@@ -275,9 +274,8 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
         
         let data = cityForecastVM.cityForecasts[indexPath.section].dailyForecastData.list[indexPath.row]
         let timezone = cityForecastVM.cityForecasts[indexPath.section].dailyForecastData.city.timezone
-        let timestamp = data.dt + timezone
         
-        cell.setData(data: data, timestamp: timestamp)
+        cell.setData(data: data, timezone: timezone)
         return cell
     }
     
